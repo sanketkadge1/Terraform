@@ -3,6 +3,11 @@ module "s3_bucket" {
 
   bucket = "my-s3-bucket"
   acl    = "private"
+  
+  tags  = {
+    Name        = "CMT COP Demo"
+    Environment = "Dev"
+  }
 
   versioning = {
     enabled = true
