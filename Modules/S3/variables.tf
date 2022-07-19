@@ -1,15 +1,4 @@
-locals {
-  _tags = {
-    Name        = var.bucket
-  }
-}
-
-locals {
-  tags        = merge(var.tags, local._tags)
-}
-
-
-variable "enable" {
+variable "create_bucket" {
   description = "Controls if S3 bucket should be created"
   type        = bool
   default     = true
@@ -29,6 +18,12 @@ variable "attach_lb_log_delivery_policy" {
 
 variable "attach_deny_insecure_transport_policy" {
   description = "Controls if S3 bucket should have deny non-SSL transport policy attached"
+  type        = bool
+  default     = false
+}
+
+variable "attach_require_latest_tls_policy" {
+  description = "Controls if S3 bucket should require the latest version of TLS"
   type        = bool
   default     = false
 }
@@ -58,9 +53,9 @@ variable "bucket_prefix" {
 }
 
 variable "acl" {
-  description = "(Optional) The canned ACL to apply. Defaults to 'private'. Conflicts with `grant`"
+  description = "(Optional) The canned ACL to apply. Conflicts with `grant`"
   type        = string
-  default     = "private"
+  default     = null
 }
 
 variable "policy" {
@@ -69,6 +64,11 @@ variable "policy" {
   default     = null
 }
 
+variable "tags" {
+  description = "(Optional) A mapping of tags to assign to the bucket."
+  type        = map(string)
+  default     = {}
+}
 
 variable "force_destroy" {
   description = "(Optional, Default:false ) A boolean that indicates all objects should be deleted from the bucket so that the bucket can be destroyed without error. These objects are not recoverable."
@@ -90,7 +90,7 @@ variable "request_payer" {
 
 variable "website" {
   description = "Map containing static web-site hosting or redirect configuration."
-  type        = map(string)
+  type        = any # map(string)
   default     = {}
 }
 
@@ -118,6 +118,18 @@ variable "grant" {
   default     = []
 }
 
+variable "owner" {
+  description = "Bucket owner's display name and ID. Conflicts with `acl`"
+  type        = map(string)
+  default     = {}
+}
+
+variable "expected_bucket_owner" {
+  description = "The account ID of the expected bucket owner"
+  type        = string
+  default     = null
+}
+
 variable "lifecycle_rule" {
   description = "List of maps containing configuration of object lifecycle management."
   type        = any
@@ -136,10 +148,22 @@ variable "server_side_encryption_configuration" {
   default     = {}
 }
 
+variable "intelligent_tiering" {
+  description = "Map containing intelligent tiering configuration."
+  type        = any
+  default     = {}
+}
+
 variable "object_lock_configuration" {
   description = "Map containing S3 object locking configuration."
   type        = any
   default     = {}
+}
+
+variable "object_lock_enabled" {
+  description = "Whether S3 bucket should have an Object Lock configuration enabled."
+  type        = bool
+  default     = false
 }
 
 variable "block_public_acls" {
@@ -173,7 +197,7 @@ variable "control_object_ownership" {
 }
 
 variable "object_ownership" {
-  description = "Object ownership. Valid values: BucketOwnerPreferred or ObjectWriter. 'BucketOwnerPreferred': Objects uploaded to the bucket change ownership to the bucket owner if the objects are uploaded with the bucket-owner-full-control canned ACL. 'ObjectWriter': The uploading account will own the object if the object is uploaded with the bucket-owner-full-control canned ACL."
+  description = "Object ownership. Valid values: BucketOwnerEnforced, BucketOwnerPreferred or ObjectWriter. 'BucketOwnerEnforced': ACLs are disabled, and the bucket owner automatically owns and has full control over every object in the bucket. 'BucketOwnerPreferred': Objects uploaded to the bucket change ownership to the bucket owner if the objects are uploaded with the bucket-owner-full-control canned ACL. 'ObjectWriter': The uploading account will own the object if the object is uploaded with the bucket-owner-full-control canned ACL."
   type        = string
   default     = "ObjectWriter"
 }
